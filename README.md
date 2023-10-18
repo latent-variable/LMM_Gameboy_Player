@@ -4,7 +4,9 @@
 
 This project aims to integrate the LLaVA language vision model into a Game Boy emulator (PyBoy) to play Pokemon games. The LLaVA model analyses the game's current state and suggests actions like moving UP, DOWN, LEFT, RIGHT, or pressing A, B, SELECT, START buttons.
 
-![Game Frame](frame.png)
+<p align="center">
+  <img src="frame.png" alt="Game Frame"/>
+</p>
 
 ## Requirements
 
