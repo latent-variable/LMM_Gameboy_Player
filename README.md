@@ -3,22 +3,19 @@
 ## Overview
 
 This project aims to integrate the LLaVA language vision model into a Game Boy emulator (PyBoy) to play Pokemon games. The LLaVA model analyses the game's current state and suggests actions like moving UP, DOWN, LEFT, RIGHT, or pressing A, B, SELECT, START buttons.
+![Game Frame](frame.png)
 
 ## Requirements
 
-- Python >= 3.7
+- Python >= 3.9
 - PyBoy
 - LLaVA model files
 
 ## Installation
 
-1. Install PyBoy:
-
-    ```bash
-    pip install pyboy
-    ```
-
-2. Download and place the LLaVA model files in the appropriate directory.
+1. Clone the repository.
+2. Install the requirements.
+3. Download and place the LLaVA model files in the appropriate directory.
 
 ## How to Run
 
