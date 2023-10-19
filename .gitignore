@@ -1,5 +1,7 @@
 LLaVA/
 recordings/
+transformers/
+fuyu-8b/
 *.gb*
 
 #Byte-compiled / optimized / DLL files

@@ -4,6 +4,7 @@ import sys
 import os
 import re
 import random
+import time 
 import numpy as np
 
 # Allow LLaVA to locate it's dependencies 
@@ -16,6 +17,9 @@ from LLaVA.llava.conversation import conv_templates, SeparatorStyle
 from LLaVA.llava.model.builder import load_pretrained_model
 from LLaVA.llava.utils import disable_torch_init
 from LLaVA.llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+
+
+from transformers import FuyuForCausalLM, AutoTokenizer, FuyuProcessor, FuyuImageProcessor
 
 
 from prompt import get_gameplay_prompt
@@ -34,6 +38,21 @@ def load_image(image_file):
     else:
         image = Image.open(image_file).convert('RGB')
     return image
+
+
+
+    
+class DummyBrain:
+    def __init__(self):
+        self.actions = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'A', 'B', 'SELECT', 'START']
+
+    def get_action(self, image):
+        # Pick a random action from the list
+        # time.sleep(5)
+        return random.choice(self.actions)
+
+
+
 
 class DummyConfig:
     def __init__(self, image_aspect_ratio='pad'):
@@ -145,14 +164,67 @@ class LLaVABrain:
         print('No matching valid input found!')
         return None 
 
+
+
+
+class FuyuBrain:
+    def __init__(self, model_path,  temperature=0.3, max_new_tokens=128):
+        # load model, tokenizer, and processor
+        pretrained_path = model_path 
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_path)
+        image_processor = FuyuImageProcessor()
+        self.processor = FuyuProcessor(image_processor=image_processor, tokenizer=tokenizer)
+        self.max_new_tokens = max_new_tokens
+        self.temperature = temperature
+
+        print('Loading Fuyu model')
+        self.model = FuyuForCausalLM.from_pretrained(pretrained_path, device_map="cuda:0", torch_dtype=torch.float16)
         
 
-class DummyBrain:
-    def __init__(self):
-        self.actions = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'A', 'B', 'SELECT', 'START']
 
-    def get_action(self, image):
-        # Pick a random action from the list
-        return random.choice(self.actions)
+    def get_action(self, image_file):
 
-    # Add any other methods that LLaVABrain has, and provide dummy implementations
+        image_pil = Image.open(image_file)
+        # test inference
+        text_prompt = get_gameplay_prompt()
+        # text_prompt = "Generate a coco-style caption.\n"
+        
+    
+        model_inputs = self.processor(text=text_prompt, images=[image_pil], device="cuda:0")
+        for k, v in model_inputs.items():
+            model_inputs[k] = v.to(device="cuda:0")
+
+        generation_output = self.model.generate(**model_inputs, max_new_tokens=self.max_new_tokens, temperature=self.temperature)
+        generation_text = self.processor.batch_decode(generation_output, skip_special_tokens=True)[0]
+   
+        img_tokens, text_output = generation_text.split('<s>')
+        text_output = text_output.replace(text_prompt, "")
+        print(f'\n\n outputs: {text_output} \n\n')
+
+        # Here, parse 'outputs' to extract the game action.
+        action = self.grab_action_from_response(text_output)
+
+        return action
+    
+    def remove_user_tokens_from_history(self ):
+        clear_user_inp = f"{self.roles[0]}: "
+        self.conv.messages[-2][-1] = clear_user_inp
+
+    def grab_action_from_response(self, text_data):
+        valid_options = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'A', 'B', 'SELECT', 'START']
+        # Using string methods
+        for option in valid_options:
+            button_option = option +' button'
+            if button_option in text_data:
+                print(f"Found option using string method: {option}")
+                return option
+                
+        # Using regular expression
+        pattern = r'\b(?:' + '|'.join(valid_options) + r')\b'
+        match = re.search(pattern, text_data)
+        if match:
+            print(f"Found option using regex: {match.group()}")
+            return match.group()
+        
+        print('No matching valid input found!')
+        return None 

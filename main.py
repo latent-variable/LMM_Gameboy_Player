@@ -28,13 +28,10 @@ def main(rom_path):
     except KeyboardInterrupt:
         print("Exiting environment...")
     finally:
-        
-      
-        # Save to file
-        
         env.close()
 
 
 
 if __name__ == "__main__":
-   main(r'C:\Users\linoa\Documents\Code\LMM_Pokemon\ROMs\Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb')
+   main(r'C:\Users\linoa\Documents\Code\LMM_Gameboy_Player\ROMs\Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb')
+#    main(r'C:\Users\linoa\Documents\Code\LMM_Gameboy_Player\ROMs\4-in-1 Fun Pak (USA, Europe).gb')
